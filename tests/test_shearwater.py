@@ -4,10 +4,10 @@
 
 import pytest
 
-from click.testing import CliRunner
+# from click.testing import CliRunner
 
-import shearwater
-from shearwater import cli
+# import shearwater
+# from shearwater import cli
 
 
 @pytest.fixture
