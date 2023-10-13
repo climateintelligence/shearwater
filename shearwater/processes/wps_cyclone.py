@@ -1,6 +1,6 @@
-from pywps import Process, LiteralInput, LiteralOutput, UOM
+from pywps import Process, LiteralInput, LiteralOutput
 from pywps.app.Common import Metadata
-from datetime import datetime
+# from datetime import datetime
 
 import intake
 
@@ -55,16 +55,16 @@ class Cyclone(Process):
     def _handler(request, response):
         LOGGER.info("running cyclone ...")
 
-        master_catalog=intake.open_catalog(["https://gitlab.dkrz.de/data-infrastructure-services/intake-esm/-/raw/master/esm-collections/cloud-access/dkrz_catalog.yaml"])
+        master_catalog = intake.open_catalog(["https://gitlab.dkrz.de/data-infrastructure-services/intake-esm/-/raw/master/esm-collections/cloud-access/dkrz_catalog.yaml"])  # noqa
         # master_catalog = intake.open_catalog('/pool/data/Catalogs/dkrz_catalog.yaml')
         era5_catalog = master_catalog['dkrz_era5_disk']
 
         query = {
             'era_id': 'ET',
-            'level_type':'surface',
+            'level_type': 'surface',
             'table_id': 128,
-            #'frequency':'hourly',
-            'code':34,
+            # 'frequency':'hourly',
+            'code': 34,
             'dataType': 'an',
             'validation_date': '2023-06-27',
         }
@@ -73,7 +73,6 @@ class Cyclone(Process):
         # my_catalog.df
 
         era_path = my_catalog.df['uri'].iloc[0]
-        
         response.outputs['output'].data = f'netcdf {era_path}'
         response.outputs['output_csv'].data = 'csv ' + request.inputs['model'][0].data
         return response
