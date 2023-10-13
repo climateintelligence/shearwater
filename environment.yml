@@ -9,5 +9,10 @@ dependencies:
 - jinja2
 - click
 - psutil
+- intake
+- intake-esm
+- pydantic<2
+- requests
+- aiohttp
 # tests
 - pytest
