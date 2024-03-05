@@ -132,6 +132,6 @@ class Cyclone(Process):
         data['predictions_lag0'] = prediction.reshape(-1,1)
         prediction_path = "/home/b/b382633/shearwater/data/prediction_Sindian.csv"
         data.to_csv(prediction_path)
-        
+
         response.outputs['output_csv'].data = prediction_path
         return response
