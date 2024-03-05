@@ -7,3 +7,4 @@ intake-esm
 pydantic<2
 requests
 aiohttp
+birdy

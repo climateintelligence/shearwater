@@ -65,7 +65,7 @@ autodoc_mock_imports = [
     "spotpy",
     "matplotlib",
     "scipy",
-    "birdy",
+    #"birdy",
     "unidecode",
     "gdal",
     "sentry_sdk",
@@ -87,9 +87,9 @@ autodoc_mock_imports = [
     "proj",
     "cartopy",
     "scikit-learn",
-    "cairo",
-    "ipykernel",
-    "tensorflow"
+    "cairo"#,
+    #"ipykernel",
+    #"tensorflow"
 ]
 
 # Monkeypatch constant because the following are mock imports.
