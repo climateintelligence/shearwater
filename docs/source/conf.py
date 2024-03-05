@@ -88,6 +88,8 @@ autodoc_mock_imports = [
     "cartopy",
     "scikit-learn",
     "cairo",
+    "ipykernel",
+    "tensorflow"
 ]
 
 # Monkeypatch constant because the following are mock imports.
