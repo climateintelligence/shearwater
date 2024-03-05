@@ -1,6 +1,6 @@
 from pywps import Process, LiteralInput, LiteralOutput
 from pywps.app.Common import Metadata
-#import birdy
+# import birdy
 from tensorflow.keras import models
 import pickle
 import numpy as np
@@ -8,7 +8,7 @@ import numpy
 import pandas as pd
 # from datetime import datetime
 
-#import intake
+# import intake
 
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -95,7 +95,7 @@ class Cyclone(Process):
 
         start_date = request.inputs['start_day'][0].data
         end_date = request.inputs['end_day'][0].data
-        #area = request.inputs['area'][0].data
+        # area = request.inputs['area'][0].data
 
         data1 = pd.read_csv("/home/b/b382633/shearwater/data/test_dailymeans_Sindian_1.csv")
         data2 = pd.read_csv("/home/b/b382633/shearwater/data/test_dailymeans_Sindian_2.csv")
@@ -122,12 +122,12 @@ class Cyclone(Process):
                 images[day, :, :, i] = a.pivot(index='latitude', columns='longitude').sort_index(ascending=False)[var]
                 i += 1
             k += 1
-            if ((k % 100 == 0) & (verbose == True)): 
+            if ((k % 100 == 0) & (verbose is True)):
                 print(k)
 
         test_img_std = images
 
-        test_img_std = np.pad(test_img_std, ((0, 0),(1, 2),(1, 2),(0, 0)), 'constant')
+        test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
 
         prediction = model_trained.predict(test_img_std)
         data = data[["latitude", "longitude", "time"]]
