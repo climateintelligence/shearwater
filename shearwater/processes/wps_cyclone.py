@@ -9,7 +9,7 @@ LOGGER = logging.getLogger("PYWPS")
 
 
 class Cyclone(Process):
-    """A process to forecast tropical cyclone activities."""
+    """A process to forecast tropical cyclone activities. Minor change to test commit."""
     def __init__(self):
         inputs = [
             LiteralInput('model', 'Model name',
