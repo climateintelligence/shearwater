@@ -14,7 +14,6 @@ dependencies:
 - pydantic<2
 - requests
 - aiohttp
-- birdy
 # tests
 - pytest
 - pandoc
