@@ -1,6 +1,6 @@
 from pywps import Process, LiteralInput, LiteralOutput
 from pywps.app.Common import Metadata
-from keras import models
+from tensorflow.keras import models
 import pickle
 import numpy as np
 import pandas as pd
