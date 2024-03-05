@@ -1,14 +1,14 @@
 from pywps import Process, LiteralInput, LiteralOutput
 from pywps.app.Common import Metadata
-import birdy
+#import birdy
 from tensorflow.keras import models
 import pickle
 import numpy as np
-import numpy 
+import numpy
 import pandas as pd
 # from datetime import datetime
 
-import intake
+#import intake
 
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -94,42 +94,44 @@ class Cyclone(Process):
 #         return response
 
         start_date = request.inputs['start_day'][0].data
-        end_date =  request.inputs['end_day'][0].data
-        area =  request.inputs['area'][0].data
-        
+        end_date = request.inputs['end_day'][0].data
+        #area = request.inputs['area'][0].data
+
         data1 = pd.read_csv("/home/b/b382633/shearwater/data/test_dailymeans_Sindian_1.csv")
         data2 = pd.read_csv("/home/b/b382633/shearwater/data/test_dailymeans_Sindian_2.csv")
         data = pd.concat((data1, data2), ignore_index=True)
         data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
-        
+
         model_trained = models.load_model('/home/b/b382633/shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
-        
-        variables = ['vo','r','u_200','u_850','v_200','v_850','tcwv','sst','shear']
-        with open('/home/b/b382633/shearwater/data/full_statistics.pkl','rb') as f:  
+
+        variables = ['vo', 'r', 'u_200', 'u_850', 'v_200', 'v_850', 'tcwv', 'sst', 'shear']
+        with open('/home/b/b382633/shearwater/data/full_statistics.pkl', 'rb') as f:
             means, stds = pickle.load(f)
         data[variables] = (data[variables]-means[variables])/stds[variables]
-        
-        number_of_img, rows, cols = len(data.time.unique()), len(data.latitude.unique()), len(data.longitude.unique())
-        images = np.zeros( (number_of_img, rows, cols, len(variables)) )
-        df = data.sort_values(by=['time','latitude','longitude'])
-        verbose = False
-        k=0
-        for day in range(0,number_of_img):
 
-            a=df.iloc[377*day:377*(day+1)]
-            i=0
+        number_of_img, rows, cols = len(data.time.unique()), len(data.latitude.unique()), len(data.longitude.unique())
+        images = np.zeros((number_of_img, rows, cols, len(variables)))
+        df = data.sort_values(by=['time', 'latitude', 'longitude'])
+        verbose = False
+        k = 0
+        for day in range(0, number_of_img):
+
+            a = df.iloc[377*day:377*(day+1)]
+            i = 0
             for var in variables:
-                images[day,:,:,i] = a.pivot(index='latitude', columns='longitude').sort_index(ascending=False)[var]
-                i+=1
-            k+=1
-            if (k%100==0) & (verbose==True): print(k)
+                images[day, :, :, i] = a.pivot(index='latitude', columns='longitude').sort_index(ascending=False)[var]
+                i += 1
+            k += 1
+            if ((k % 100 == 0) & (verbose == True)): 
+                print(k)
+
         test_img_std = images
-        
-        test_img_std = np.pad(test_img_std, ((0,0),(1,2),(1,2),(0,0)), 'constant')
-        
+
+        test_img_std = np.pad(test_img_std, ((0, 0),(1, 2),(1, 2),(0, 0)), 'constant')
+
         prediction = model_trained.predict(test_img_std)
         data = data[["latitude", "longitude", "time"]]
-        data['predictions_lag0'] = prediction.reshape(-1,1)
+        data['predictions_lag0'] = prediction.reshape(-1, 1)
         prediction_path = "/home/b/b382633/shearwater/data/prediction_Sindian.csv"
         data.to_csv(prediction_path)
 
