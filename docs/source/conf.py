@@ -65,6 +65,7 @@ autodoc_mock_imports = [
     "spotpy",
     "matplotlib",
     "scipy",
+    "birdy",
     "unidecode",
     "gdal",
     "sentry_sdk",

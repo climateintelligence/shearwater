@@ -15,6 +15,7 @@ dependencies:
 - requests
 - aiohttp
 - scipy
+- birdy
 # tests
 - pytest
 - pandoc
