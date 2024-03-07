@@ -1,7 +1,7 @@
 from pywps import Process, LiteralInput, LiteralOutput
 from pywps.app.Common import Metadata
 # import birdy
-from tensorflow.keras import models
+# from tensorflow.keras import models
 import pickle
 import numpy as np
 import numpy
@@ -70,6 +70,8 @@ class Cyclone(Process):
     @staticmethod
     def _handler(request, response):
         LOGGER.info("running cyclone ...")
+        # TODO: lazy load tensorflow ... issues with sphinx doc build
+        from tensorflow.keras import models
 
 #         master_catalog = intake.open_catalog(["https://gitlab.dkrz.de/data-infrastructure-services/intake-esm/-/raw/master/esm-collections/cloud-access/dkrz_catalog.yaml"])  # noqa
 #         # master_catalog = intake.open_catalog('/pool/data/Catalogs/dkrz_catalog.yaml')
