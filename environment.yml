@@ -18,6 +18,7 @@ dependencies:
 - scipy
 - birdy
 - tensorflow
+- numpy=1.26.0
 # tests
 - pytest
 - pandoc

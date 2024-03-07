@@ -11,3 +11,4 @@ birdy
 tensorflow
 scipy
 ipykernel
+numpy
