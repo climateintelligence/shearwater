@@ -18,27 +18,31 @@ class Cyclone(Process):
     """A process to forecast tropical cyclone activities."""
     def __init__(self):
         inputs = [
-            # LiteralInput('model', 'Model name',
-            #              abstract='trained ML model ...: CNN, Unet',
-            #              # keywords=['name', 'firstname'],
-            #              default='CNN',
-            #              # allowed_values=['CNN', 'Unet'],
-            #              data_type='string'),
-            LiteralInput('start_day', 'Start Day',
-                         abstract='2021-10-12',
-                         # keywords=['name', 'firstname'],
-                         # default=f"{datetime.today()}",
-                         data_type='string'),
-            LiteralInput('end_day', 'End Day',
-                         abstract='2023-10-12',
-                         # keywords=['name', 'firstname'],
-                         # default=f"{datetime.today()}",
-                         data_type='string'),
-            LiteralInput('area', 'Area',
-                         abstract='Sindian',
-                         # keywords=['name', 'firstname'],
-                         # default=f"{datetime.today()}",
-                         data_type='string'),
+            LiteralInput(
+                "start_day",
+                "Start Day",
+                data_type="string",
+                abstract="Enter the start date, like 2021-01-01",
+                default="2022-01-01"
+            ),
+            LiteralInput(
+                "end_day",
+                "End Day",
+                data_type="string",
+                abstract="Enter the end date, like 2023-10-12",
+                default="2022-01-31"
+            ),
+            LiteralInput(
+                "area",
+                "Area",
+                data_type="string",
+                abstract="Choose the region of your interest",
+                allowed_values=[
+                    "Sindian",
+                    "TBD"
+                ],
+                default="Sindian",
+            )
         ]
         outputs = [
             # LiteralOutput('output', 'Cyclone activity forecast',
@@ -99,16 +103,14 @@ class Cyclone(Process):
         end_date = request.inputs['end_day'][0].data
         # area = request.inputs['area'][0].data
 
-        data1 = pd.read_csv("/home/b/b382633/shearwater/data/test_dailymeans_Sindian_1.csv")
         # to be updated with data repository
-        data2 = pd.read_csv("/home/b/b382633/shearwater/data/test_dailymeans_Sindian_2.csv")
+        data1 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_1.csv")
+        data2 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_2.csv")
         data = pd.concat((data1, data2), ignore_index=True)
         data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
 
-        model_trained = models.load_model('/home/b/b382633/shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
-
         variables = ['vo', 'r', 'u_200', 'u_850', 'v_200', 'v_850', 'tcwv', 'sst', 'shear']
-        with open('/home/b/b382633/shearwater/data/full_statistics.pkl', 'rb') as f:
+        with open('../shearwater/data/full_statistics.pkl', 'rb') as f:
             means, stds = pickle.load(f)
         data[variables] = (data[variables]-means[variables])/stds[variables]
 
@@ -132,10 +134,13 @@ class Cyclone(Process):
 
         test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
 
+        model_trained = models.load_model('../shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
+
         prediction = model_trained.predict(test_img_std)
+
         data = data[["latitude", "longitude", "time"]]
         data['predictions_lag0'] = prediction.reshape(-1, 1)
-        prediction_path = "/home/b/b382633/shearwater/data/prediction_Sindian.csv"
+        prediction_path = "../shearwater/data/prediction_Sindian.csv"
         data.to_csv(prediction_path)
 
         response.outputs['output_csv'].data = prediction_path
