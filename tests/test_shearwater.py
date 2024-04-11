@@ -6,7 +6,7 @@ import pytest
 
 # from click.testing import CliRunner
 
-# import shearwater
+import shearwater
 # from shearwater import cli
 
 
