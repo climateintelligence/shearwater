@@ -1,4 +1,4 @@
-from pywps import Process, LiteralInput, LiteralOutput
+from pywps import Process, LiteralInput, LiteralOutput, ComplexInput, ComplexOutput
 from pywps.app.Common import Metadata
 # import birdy
 # from tensorflow.keras import models
@@ -7,6 +7,9 @@ import numpy as np
 import numpy
 import pandas as pd
 # from datetime import datetime
+import os
+from pywps import FORMATS, Format
+from pathlib import Path
 
 # import intake
 
@@ -49,10 +52,12 @@ class Cyclone(Process):
             #               abstract='netcdf',
             #               # keywords=['output', 'result', 'response'],
             #               data_type='string'),
-            LiteralOutput('output_csv', 'Cyclone activity forecast',
+            ComplexOutput('output_csv', 'Cyclone activity forecast',
                           abstract='csv file',
+                          as_reference=True,
                           # keywords=['output', 'result', 'response'],
-                          data_type='string')
+                          supported_formats=[FORMATS.CSV],
+                        )
         ]
 
         super(Cyclone, self).__init__(
@@ -71,8 +76,7 @@ class Cyclone(Process):
             status_supported=True
         )
 
-    @staticmethod
-    def _handler(request, response):
+    def _handler(self, request, response):
         LOGGER.info("running cyclone ...")
         # TODO: lazy load tensorflow ... issues with sphinx doc build
         from tensorflow.keras import models
@@ -140,8 +144,10 @@ class Cyclone(Process):
 
         data = data[["latitude", "longitude", "time"]]
         data['predictions_lag0'] = prediction.reshape(-1, 1)
-        prediction_path = "../shearwater/data/prediction_Sindian.csv"
+
+        workdir = Path(self.workdir)
+        prediction_path = os.path.join(workdir, "prediction_Sindian.csv")
         data.to_csv(prediction_path)
 
-        response.outputs['output_csv'].data = prediction_path
+        response.outputs['output_csv'].file = prediction_path
         return response
