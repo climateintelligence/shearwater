@@ -104,8 +104,8 @@ class Cyclone(Process):
         # area = request.inputs['area'][0].data
 
         # to be updated with data repository
-        data1 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_1.csv")
-        data2 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_2.csv")
+        data1 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_1.zip")
+        data2 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_2.zip")
         data = pd.concat((data1, data2), ignore_index=True)
         data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
 
