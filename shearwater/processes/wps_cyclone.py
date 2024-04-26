@@ -1,4 +1,4 @@
-from pywps import Process, LiteralInput, LiteralOutput, ComplexInput, ComplexOutput
+from pywps import Process, LiteralInput, ComplexOutput
 from pywps.app.Common import Metadata
 # import birdy
 # from tensorflow.keras import models
@@ -8,7 +8,7 @@ import numpy
 import pandas as pd
 # from datetime import datetime
 import os
-from pywps import FORMATS, Format
+from pywps import FORMATS
 from pathlib import Path
 
 # import intake
@@ -56,8 +56,7 @@ class Cyclone(Process):
                           abstract='csv file',
                           as_reference=True,
                           # keywords=['output', 'result', 'response'],
-                          supported_formats=[FORMATS.CSV],
-                        )
+                          supported_formats=[FORMATS.CSV],)
         ]
 
         super(Cyclone, self).__init__(
