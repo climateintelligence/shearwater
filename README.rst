@@ -22,9 +22,9 @@ ShearWater
     :alt: Join the chat at https://gitter.im/bird-house/birdhouse
 
 ShearWater (the bird)
-  *ShearWater is a bird ...*
+  *ShearWater is a bird to perform detection and forecast of tropical cyclone activity.*
 
-A WPS for forecasting ctropical-cyclone activities.
+This WPS is designed to perform detection and forecast of tropical-cyclone activities. 
 
 Documentation
 -------------
