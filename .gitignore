@@ -107,3 +107,9 @@ testdata.json
 
 # IDE settings
 .vscode/
+
+# Mac DS_store
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
