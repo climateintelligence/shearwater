@@ -116,8 +116,10 @@ class Cyclone(Process):
         data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
 
         variables = ['vo', 'r', 'u_200', 'u_850', 'v_200', 'v_850', 'tcwv', 'sst', 'shear']
-        with open("https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.pkl", 'rb') as f:
-            means, stds = pickle.load(f)
+        # with open("https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.pkl", 'rb') as f:
+        #     means, stds = pickle.load(f)
+        means, stds = pd.read_pickle("https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.zip")
+        
         data[variables] = (data[variables]-means[variables])/stds[variables]
 
         number_of_img, rows, cols = len(data.time.unique()), len(data.latitude.unique()), len(data.longitude.unique())
