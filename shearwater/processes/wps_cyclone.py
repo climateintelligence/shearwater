@@ -1,6 +1,5 @@
 from pywps import Process, LiteralInput, ComplexOutput
 from pywps.app.Common import Metadata
-# import birdy
 # from tensorflow.keras import models
 import pickle
 import numpy as np
