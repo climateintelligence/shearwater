@@ -9,6 +9,7 @@ import pandas as pd
 import os
 from pywps import FORMATS
 from pathlib import Path
+import urllib.request
 
 # import intake
 
@@ -143,9 +144,16 @@ class Cyclone(Process):
 
         test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
 
-        model_trained = models.load_model(
-            "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras")
+        urllib.request.urlretrieve(
+            "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras",
+            "Unet_sevenAreas_fullStd_0lag_model.keras"
+        )
+
+        # model_trained = models.load_model(
+        #    "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras")
         # ('../shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
+
+        model_trained = models.load_model("./Unet_sevenAreas_fullStd_0lag_model.keras")
 
         prediction = model_trained.predict(test_img_std)
 
