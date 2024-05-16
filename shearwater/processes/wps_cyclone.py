@@ -148,7 +148,7 @@ class Cyclone(Process):
         model_path = os.path.join(workdir, "Unet_sevenAreas_fullStd_0lag_model.keras")
         urllib.request.urlretrieve(
             "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras",
-            model_path # "Unet_sevenAreas_fullStd_0lag_model.keras"
+            model_path  # "Unet_sevenAreas_fullStd_0lag_model.keras"
         )
 
         # model_trained = models.load_model(
