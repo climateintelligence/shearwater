@@ -144,23 +144,24 @@ class Cyclone(Process):
 
         test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
 
+        workdir = Path(self.workdir)
+        model_path = os.path.join(workdir, "Unet_sevenAreas_fullStd_0lag_model.keras")
         urllib.request.urlretrieve(
             "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras",
-            "Unet_sevenAreas_fullStd_0lag_model.keras"
+            model_path # "Unet_sevenAreas_fullStd_0lag_model.keras"
         )
 
         # model_trained = models.load_model(
         #    "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras")
         # ('../shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
 
-        model_trained = models.load_model("./Unet_sevenAreas_fullStd_0lag_model.keras")
+        model_trained = models.load_model(model_path)
 
         prediction = model_trained.predict(test_img_std)
 
         data = data[["latitude", "longitude", "time"]]
         data['predictions_lag0'] = prediction.reshape(-1, 1)
 
-        workdir = Path(self.workdir)
         prediction_path = os.path.join(workdir, "prediction_Sindian.csv")
         data.to_csv(prediction_path)
 
