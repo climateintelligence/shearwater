@@ -1,8 +1,7 @@
 from pywps import Process, LiteralInput, ComplexOutput
 from pywps.app.Common import Metadata
-# import birdy
 # from tensorflow.keras import models
-import pickle
+# import pickle
 import numpy as np
 import numpy
 import pandas as pd
@@ -10,6 +9,7 @@ import pandas as pd
 import os
 from pywps import FORMATS
 from pathlib import Path
+import urllib.request
 
 # import intake
 
@@ -107,14 +107,21 @@ class Cyclone(Process):
         # area = request.inputs['area'][0].data
 
         # to be updated with data repository
-        data1 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_1.zip")
-        data2 = pd.read_csv("../shearwater/data/test_dailymeans_Sindian_2.zip")
+        data1 = pd.read_csv(
+            "https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_Sindian_1.zip")
+        # ("../shearwater/data/test_dailymeans_Sindian_1.zip")
+        data2 = pd.read_csv(
+            "https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_Sindian_2.zip")
+        # ("../shearwater/data/test_dailymeans_Sindian_2.zip")
         data = pd.concat((data1, data2), ignore_index=True)
         data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
 
         variables = ['vo', 'r', 'u_200', 'u_850', 'v_200', 'v_850', 'tcwv', 'sst', 'shear']
-        with open('../shearwater/data/full_statistics.pkl', 'rb') as f:
-            means, stds = pickle.load(f)
+        # with open("https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.pkl", 'rb') as f:
+        #     means, stds = pickle.load(f)
+        means, stds = pd.read_pickle(
+            "https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.zip")
+
         data[variables] = (data[variables]-means[variables])/stds[variables]
 
         number_of_img, rows, cols = len(data.time.unique()), len(data.latitude.unique()), len(data.longitude.unique())
@@ -137,14 +144,24 @@ class Cyclone(Process):
 
         test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
 
-        model_trained = models.load_model('../shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
+        workdir = Path(self.workdir)
+        model_path = os.path.join(workdir, "Unet_sevenAreas_fullStd_0lag_model.keras")
+        urllib.request.urlretrieve(
+            "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras",
+            model_path  # "Unet_sevenAreas_fullStd_0lag_model.keras"
+        )
+
+        # model_trained = models.load_model(
+        #    "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras")
+        # ('../shearwater/data/Unet_sevenAreas_fullStd_0lag_model.keras')
+
+        model_trained = models.load_model(model_path)
 
         prediction = model_trained.predict(test_img_std)
 
         data = data[["latitude", "longitude", "time"]]
         data['predictions_lag0'] = prediction.reshape(-1, 1)
 
-        workdir = Path(self.workdir)
         prediction_path = os.path.join(workdir, "prediction_Sindian.csv")
         data.to_csv(prediction_path)
 
