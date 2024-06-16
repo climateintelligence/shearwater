@@ -1,10 +1,11 @@
-from pywps import Process, LiteralInput, ComplexOutput
+from pywps import Process, LiteralInput, ComplexOutput, LiteralOutput
 from pywps.app.Common import Metadata
 # from tensorflow.keras import models
 # import pickle
 import numpy as np
 import numpy
 import pandas as pd
+import metview as mv
 # from datetime import datetime
 import os
 from pywps import FORMATS
@@ -18,22 +19,22 @@ LOGGER = logging.getLogger("PYWPS")
 
 
 class Cyclone(Process):
-    """A process to forecast tropical cyclone activities."""
+    """A process to forecast tropical cyclone activity."""
     def __init__(self):
         inputs = [
             LiteralInput(
                 "start_day",
                 "Start Day",
                 data_type="string",
-                abstract="Enter the start date, like 2021-01-01",
-                default="2022-01-01"
+                abstract="Enter the start date, like 2024-05-01",
+                default="2024-05-01"
             ),
             LiteralInput(
                 "end_day",
                 "End Day",
                 data_type="string",
-                abstract="Enter the end date, like 2023-10-12",
-                default="2022-01-31"
+                abstract="Enter the end date, like 2024-05-28",
+                default="2024-05-28"
             ),
             LiteralInput(
                 "area",
@@ -52,18 +53,21 @@ class Cyclone(Process):
             #               abstract='netcdf',
             #               # keywords=['output', 'result', 'response'],
             #               data_type='string'),
-            ComplexOutput('output_csv', 'Cyclone activity forecast',
-                          abstract='csv file',
-                          as_reference=True,
-                          # keywords=['output', 'result', 'response'],
-                          supported_formats=[FORMATS.CSV],)
+            LiteralOutput('output_png', 'Cyclone activity forecast',
+                          abstract='png file',
+                          data_type='string'),
+            #ComplexOutput('output_csv', 'Cyclone activity forecast',
+            #              abstract='csv file',
+            #              as_reference=True,
+            #              # keywords=['output', 'result', 'response'],
+            #              supported_formats=[FORMATS.CSV],)
         ]
 
         super(Cyclone, self).__init__(
             self._handler,
             identifier='cyclone',
             title='Cyclone',
-            abstract='A process to forecast tropical cyclone activities.',
+            abstract='A process to forecast tropical cyclone activity.',
             # keywords=['hello', 'demo'],
             metadata=[
                 Metadata('PyWPS', 'https://pywps.org/'),
@@ -80,45 +84,34 @@ class Cyclone(Process):
         # TODO: lazy load tensorflow ... issues with sphinx doc build
         from tensorflow.keras import models
 
-#         master_catalog = intake.open_catalog(["https://gitlab.dkrz.de/data-infrastructure-services/intake-esm/-/raw/master/esm-collections/cloud-access/dkrz_catalog.yaml"])  # noqa
-#         # master_catalog = intake.open_catalog('/pool/data/Catalogs/dkrz_catalog.yaml')
-#         era5_catalog = master_catalog['dkrz_era5_disk']
-
-#         query = {
-#             'era_id': 'ET',
-#             'level_type': 'surface',
-#             'table_id': 128,
-#             # 'frequency':'hourly',
-#             'code': 34,
-#             'dataType': 'an',
-#             'validation_date': '2023-06-27',
-#         }
-
-#         my_catalog = era5_catalog.search(**query)
-#         # my_catalog.df
-
-#         era_path = my_catalog.df['uri'].iloc[0]
-#         response.outputs['output'].data = f'netcdf {era_path}'
-#         response.outputs['output_csv'].data = 'csv ' + request.inputs['model'][0].data
-#         return response
-
         start_date = request.inputs['start_day'][0].data
         end_date = request.inputs['end_day'][0].data
         # area = request.inputs['area'][0].data
 
-        # to be updated with data repository
-        data1 = pd.read_csv(
-            "https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_Sindian_1.zip")
-        # ("../shearwater/data/test_dailymeans_Sindian_1.zip")
-        data2 = pd.read_csv(
-            "https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_Sindian_2.zip")
-        # ("../shearwater/data/test_dailymeans_Sindian_2.zip")
-        data = pd.concat((data1, data2), ignore_index=True)
-        data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
+        parameters = [[138, 'vo', [850]],
+                      [157, 'r', [700]],
+                      [131, 'u', [200,850]],
+                      [132, 'v', [200,850]],
+                      [34, 'sst', [0]],
+                      [137, 'tcwv', [0]]]
+        reso=2.5
+        area_bbox = [0,20,-30,90]
+        
+        data=pd.DataFrame()
+        for param1 in parameters:
+            path = f'/pool/data/ERA5/ET/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
+            fs1_param = mv.read(f"{path}/ET{'sf' if param1[2]==[0] else 'pl'}00_1D_{start_date[:7]}_{str(param1[0]).zfill(3)}.grb")
+            fs1_param = fs1_param.select(date=start_date.replace("-",""),level=param1[2])
+            fs1_param_interp = mv.read(data=fs1_param,grid=[reso,reso],area=area_bbox,interpolation = '"--interpolation=grid-box-average"')
+            for level in param1[2]:
+                data.loc[:,f"{param1[1]}{'_'+str(level) if (param1[1]=='u' or param1[1]=='v') else ''}"] = fs1_param_interp.select(level=level).to_dataset().to_dataframe().reset_index(drop=True)[param1[1]]
 
-        variables = ['vo', 'r', 'u_200', 'u_850', 'v_200', 'v_850', 'tcwv', 'sst', 'shear']
-        # with open("https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.pkl", 'rb') as f:
-        #     means, stds = pickle.load(f)
+        data.loc[:,['latitude','longitude']]= fs1_param_interp.select(level=level).to_dataset().to_dataframe().reset_index()[['latitude','longitude']]
+        data.loc[:,'time'] = start_date
+        data.loc[:,'shear'] = ((data.u_200-data.u_850)**2+(data.v_200-data.v_850)**2)**0.5
+        data.loc[:,'sst'] = data.sst.fillna(0)
+
+        variables = ['vo','r','u_200','u_850','v_200','v_850','tcwv','sst','shear']
         means, stds = pd.read_pickle(
             "https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.zip")
 
@@ -162,8 +155,60 @@ class Cyclone(Process):
         data = data[["latitude", "longitude", "time"]]
         data['predictions_lag0'] = prediction.reshape(-1, 1)
 
-        prediction_path = os.path.join(workdir, "prediction_Sindian.csv")
-        data.to_csv(prediction_path)
+        lag=0
+        workdir = Path(self.workdir)
+        outfilename = os.path.join(workdir, f'tcactivity_48_17_{start_date.replace("-","")}_lag{lag}_Sindian')
+        
+        if True:
+            predscol=f"predictions_lag{lag}"
+            gpt = mv.create_geo(latitudes=data["latitude"].values, longitudes=data["longitude"].values, values=data[predscol].values).set_dates([pd.Timestamp(start_date)]*data.shape[0])
+            fs = mv.geo_to_grib(geopoints = gpt, grid = [2.5,2.5], tolerance = 1.5)*1e2
+            
+            cont_gen = mv.mcont(
+                legend                         = "on",
+                contour_line_colour            = "avocado",
+                contour_shade                  = "on",
+                contour_shade_technique        = "grid_shading",
+                contour_shade_max_level_colour = "red",
+                contour_shade_min_level_colour = "blue",
+                contour_shade_colour_direction = "clockwise"
+                )
+            cont_tc = mv.mcont(
+                legend                         = "on",
+                contour_line_colour            = "avocado",
+                contour_shade                  = "on",
+                contour_max_level              = 105,
+                contour_min_level              = 0,
+                contour_shade_technique        = "grid_shading",
+                contour_shade_max_level_colour = "red",
+                contour_shade_min_level_colour = "blue",
+                contour_shade_colour_direction = "clockwise"
+                )
 
-        response.outputs['output_csv'].file = prediction_path
+            cont_oper = mv.mcont(
+                contour_automatic_setting = "style_name",
+                contour_style_name        = "prob_green2yellow",    
+                legend                    = "on"
+                )
+            coastlines = mv.mcoast(
+                map_coastline_land_shade        = "on",
+                map_coastline_land_shade_colour = "grey"
+                )
+
+            gview = mv.geoview(
+                map_area_definition = "corners",
+                area                = area_bbox,
+                coastlines          = coastlines
+                )
+            legend = mv.mlegend(
+                       legend_text_font_size     = 0.5,
+                       )
+            
+            mv.setoutput(mv.png_output(output_name = outfilename+".png"))
+            mv.plot(gview,fs,cont_oper,legend)
+            response.outputs['output_png'].data = outfilename+".png"
+        else:
+            data.to_csv(outfilename+".csv")
+            response.outputs['output_csv'].data = outfilename+".csv"
+        
         return response
