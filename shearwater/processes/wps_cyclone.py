@@ -6,7 +6,8 @@ from pywps.app.Common import Metadata
 import numpy as np
 import numpy
 import pandas as pd
-import metview as mv
+
+# import metview as mv
 
 # from datetime import datetime
 import os
@@ -86,8 +87,9 @@ class Cyclone(Process):
 
     def _handler(self, request, response):
         LOGGER.info("running cyclone ...")
-        # TODO: lazy load tensorflow ... issues with sphinx doc build
+        # TODO: lazy load for tensorflow and metview ... issues with sphinx doc build
         from tensorflow.keras import models
+        import metview as mv
 
         start_date = request.inputs["start_day"][0].data
         # end_date = request.inputs["end_day"][0].data
