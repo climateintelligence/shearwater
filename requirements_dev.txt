@@ -17,6 +17,7 @@ cruft
 birdy
 tensorflow
 metview
+eccodes
 scipy
 ipykernel
 numpy
