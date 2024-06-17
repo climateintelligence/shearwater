@@ -12,3 +12,4 @@ tensorflow
 scipy
 ipykernel
 numpy
+metview
