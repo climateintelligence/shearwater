@@ -1,4 +1,4 @@
-from pywps import Process, LiteralInput, ComplexOutput, LiteralOutput
+from pywps import Process, LiteralInput, LiteralOutput
 from pywps.app.Common import Metadata
 
 # from tensorflow.keras import models
@@ -10,7 +10,8 @@ import metview as mv
 
 # from datetime import datetime
 import os
-from pywps import FORMATS
+
+# from pywps import FORMATS
 from pathlib import Path
 import urllib.request
 
@@ -89,7 +90,7 @@ class Cyclone(Process):
         from tensorflow.keras import models
 
         start_date = request.inputs["start_day"][0].data
-        end_date = request.inputs["end_day"][0].data
+        # end_date = request.inputs["end_day"][0].data
         # area = request.inputs['area'][0].data
 
         parameters = [
@@ -169,7 +170,7 @@ class Cyclone(Process):
         k = 0
         for day in range(0, number_of_img):
 
-            a = df.iloc[377 * day : 377 * (day + 1)]
+            a = df.iloc[377 * day : 377 * (day + 1)]  # nopep8: E203
             i = 0
             for var in variables:
                 images[day, :, :, i] = a.pivot(
@@ -219,26 +220,26 @@ class Cyclone(Process):
             ).set_dates([pd.Timestamp(start_date)] * data.shape[0])
             fs = mv.geo_to_grib(geopoints=gpt, grid=[2.5, 2.5], tolerance=1.5) * 1e2
 
-            cont_gen = mv.mcont(
-                legend="on",
-                contour_line_colour="avocado",
-                contour_shade="on",
-                contour_shade_technique="grid_shading",
-                contour_shade_max_level_colour="red",
-                contour_shade_min_level_colour="blue",
-                contour_shade_colour_direction="clockwise",
-            )
-            cont_tc = mv.mcont(
-                legend="on",
-                contour_line_colour="avocado",
-                contour_shade="on",
-                contour_max_level=105,
-                contour_min_level=0,
-                contour_shade_technique="grid_shading",
-                contour_shade_max_level_colour="red",
-                contour_shade_min_level_colour="blue",
-                contour_shade_colour_direction="clockwise",
-            )
+            # cont_gen = mv.mcont(
+            #     legend="on",
+            #     contour_line_colour="avocado",
+            #     contour_shade="on",
+            #     contour_shade_technique="grid_shading",
+            #     contour_shade_max_level_colour="red",
+            #     contour_shade_min_level_colour="blue",
+            #     contour_shade_colour_direction="clockwise",
+            # )
+            # cont_tc = mv.mcont(
+            #     legend="on",
+            #     contour_line_colour="avocado",
+            #     contour_shade="on",
+            #     contour_max_level=105,
+            #     contour_min_level=0,
+            #     contour_shade_technique="grid_shading",
+            #     contour_shade_max_level_colour="red",
+            #     contour_shade_min_level_colour="blue",
+            #     contour_shade_colour_direction="clockwise",
+            # )
 
             cont_oper = mv.mcont(
                 contour_automatic_setting="style_name",
