@@ -12,3 +12,5 @@ tensorflow
 scipy
 ipykernel
 numpy
+metview
+eccodes
