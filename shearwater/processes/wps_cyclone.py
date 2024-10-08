@@ -10,7 +10,6 @@ import os
 from pywps import FORMATS, Format
 from pathlib import Path
 import urllib.request
-import metview as mv
 
 # import intake
 
@@ -91,6 +90,7 @@ class Cyclone(Process):
     def _handler(self, request, response):
         LOGGER.info("running cyclone ...")
         # TODO: lazy load tensorflow ... issues with sphinx doc build
+        import metview as mv
         from tensorflow.keras import models
 
         start_date = request.inputs['start_day'][0].data
