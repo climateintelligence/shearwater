@@ -116,6 +116,8 @@ class Cyclone(Process):
         data = pd.concat((data1, data2), ignore_index=True)
         data = data.loc[(data.time >= start_date) & (data.time <= end_date)]
 
+        data_metview=mv.read("/pool/data/ERA5/ET/sf/an/1D/151/ETsf00_1D_2024-04_151.grb")
+
         variables = ['vo', 'r', 'u_200', 'u_850', 'v_200', 'v_850', 'tcwv', 'sst', 'shear']
         # with open("https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.pkl", 'rb') as f:
         #     means, stds = pickle.load(f)
