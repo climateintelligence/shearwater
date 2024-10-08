@@ -7,7 +7,7 @@ import numpy
 import pandas as pd
 # from datetime import datetime
 import os
-from pywps import FORMATS
+from pywps import FORMATS, Format
 from pathlib import Path
 import urllib.request
 import metview as mv
