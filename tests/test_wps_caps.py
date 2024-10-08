@@ -12,6 +12,6 @@ def test_wps_caps():
                             '/wps:Process'
                             '/ows:Identifier')
     assert sorted(names.split()) == [
-        'cyclone' # ,
-#        'hello',
+        'cyclone',
+        # 'hello',
     ]
