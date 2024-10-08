@@ -17,6 +17,7 @@ import metview as mv
 import logging
 LOGGER = logging.getLogger("PYWPS")
 
+FORMAT_PNG = Format("image/png", extension=".png", encoding="base64")
 
 class Cyclone(Process):
     """A process to forecast tropical cyclone activities."""
@@ -59,9 +60,16 @@ class Cyclone(Process):
                           keywords=['output', 'result', 'response'],
                           supported_formats=[FORMATS.CSV],),
             # LiteralOutput('output_png', 'Cyclone activity forecast',
-                           #abstract='png file',
-                           # keywords=['output', 'result', 'response'],
-                           # data_type='string'),
+                          # abstract='png file',
+                          # keywords=['output', 'result', 'response'],
+                          # data_type='string'),
+            ComplexOutput(
+                "output_png",
+                "Cyclone activity forecast",
+                abstract="png file",
+                as_reference=True,
+                supported_formats=[FORMAT_PNG],
+            ),
         ]
 
         super(Cyclone, self).__init__(
@@ -192,5 +200,64 @@ class Cyclone(Process):
         prediction_path = os.path.join(workdir, "prediction_Sindian.csv")
         data.to_csv(prediction_path)
 
-        response.outputs['output_csv'].file = prediction_path
+        lag = 0
+        workdir = Path(self.workdir)
+        outfilename = os.path.join(
+            workdir, f'tcactivity_48_17_{start_date.replace("-","")}_lag{lag}_Sindian'
+        )
+
+        if True:
+            predscol = f"predictions_lag{lag}"
+            gpt = mv.create_geo(
+                latitudes=data["latitude"].values,
+                longitudes=data["longitude"].values,
+                values=data[predscol].values,
+            ).set_dates([pd.Timestamp(start_date)] * data.shape[0])
+            fs = mv.geo_to_grib(geopoints=gpt, grid=[2.5, 2.5], tolerance=1.5) * 1e2
+
+            # cont_gen = mv.mcont(
+            #     legend="on",
+            #     contour_line_colour="avocado",
+            #     contour_shade="on",
+            #     contour_shade_technique="grid_shading",
+            #     contour_shade_max_level_colour="red",
+            #     contour_shade_min_level_colour="blue",
+            #     contour_shade_colour_direction="clockwise",
+            # )
+            # cont_tc = mv.mcont(
+            #     legend="on",
+            #     contour_line_colour="avocado",
+            #     contour_shade="on",
+            #     contour_max_level=105,
+            #     contour_min_level=0,
+            #     contour_shade_technique="grid_shading",
+            #     contour_shade_max_level_colour="red",
+            #     contour_shade_min_level_colour="blue",
+            #     contour_shade_colour_direction="clockwise",
+            # )
+
+            cont_oper = mv.mcont(
+                contour_automatic_setting="style_name",
+                contour_style_name="prob_green2yellow",
+                legend="on",
+            )
+            coastlines = mv.mcoast(
+                map_coastline_land_shade="on", map_coastline_land_shade_colour="grey"
+            )
+
+            gview = mv.geoview(
+                map_area_definition="corners", area=area_bbox, coastlines=coastlines
+            )
+            legend = mv.mlegend(
+                legend_text_font_size=0.5,
+            )
+
+            mv.setoutput(mv.png_output(output_name=outfilename + ".png"))
+            mv.plot(gview, fs, cont_oper, legend)
+            response.outputs["output_png"].data = outfilename + ".png"
+        # else:
+            data.to_csv(outfilename + ".csv")
+            response.outputs["output_csv"].data = outfilename + ".csv"
+
+        # response.outputs['output_csv'].file = prediction_path
         return response
