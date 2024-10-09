@@ -29,7 +29,9 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
     - name: Test with pytest ⚙️
-      run: make test
+      run: 
+        export METVIEW_PYTHON_START_TIMEOUT=20 
+        make test
     - name: Lint with flake8 ⚙️
       run: make lint
       if: matrix.python-version == 3.11
