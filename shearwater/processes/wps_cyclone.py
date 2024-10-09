@@ -24,11 +24,11 @@ class Cyclone(Process):
     def __init__(self):
         inputs = [
             LiteralInput(
-                "start_day",
-                "Start Day",
+                "init_date",
+                "Initialisation date",
                 data_type="string",
-                abstract="Enter the start date, like 2024-05-01",
-                default="2024-05-01"
+                abstract="Enter the initialisation date, like 2024-02-17",
+                default="2024-02-17"
             ),
             LiteralInput(
                 "end_day",
@@ -38,15 +38,20 @@ class Cyclone(Process):
                 default="2024-05-28"
             ),
             LiteralInput(
-                "area",
-                "Area",
+                "region",
+                "Region",
                 data_type="string",
                 abstract="Choose the region of your interest",
                 allowed_values=[
-                    "Sindian",
-                    "TBD"
+                    "Southern Indian",
+                    "North Atlantic",
+                    "Northwest Pacific",
+                    "Australia",
+                    "Northern Indian",
+                    "East Pacific",
+                    "South Pacific",
                 ],
-                default="Sindian",
+                default="Southern Indian",
             )
         ]
         outputs = [
@@ -94,9 +99,8 @@ class Cyclone(Process):
         import metview as mv
         from tensorflow.keras import models
 
-        start_date = request.inputs['start_day'][0].data
-        end_date = request.inputs['end_day'][0].data
-        # area = request.inputs['area'][0].data
+        init_date = request.inputs['init_date'][0].data
+        region = request.inputs['region'][0].data
 
         parameters = [
             [138, "vo", [850]],
@@ -107,21 +111,33 @@ class Cyclone(Process):
             [137, "tcwv", [0]],
         ]
         reso = 2.5
-        area_bbox = [0, 20, -30, 90]
+
+        regions_dict = {
+                                # [ N,    E,   S,    W]
+            "Southern Indian"   : [ 0,   20, -30,   90],   # Southern Indian
+            "North Atlantic"    : [40,  -90,  10,  -20],   # North Atlantic
+            "Northwest Pacific" : [35,  100,   5,  170],   # Northwest Pacific
+            "Australia"         : [ 0,   90, -30,  160],   # Australia
+            "Northern Indian"   : [30,   30,   0,  100],   # Northern Indian
+            "East Pacific"      : [30, -170,   0, -100],   # East Pacific
+            "South Pacific"     : [ 0,  160, -30,  230],   # South Pacific
+        }
+        
+        region_bbox = regions_dict[region]
 
         data = pd.DataFrame()
         for param1 in parameters:
             path = f'/pool/data/ERA5/ET/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
             fs1_param = mv.read(
-                f"{path}/ET{'sf' if param1[2]==[0] else 'pl'}00_1D_{start_date[:7]}_{str(param1[0]).zfill(3)}.grb"
+                f"{path}/ET{'sf' if param1[2]==[0] else 'pl'}00_1D_{init_date[:7]}_{str(param1[0]).zfill(3)}.grb"
             )
             fs1_param = fs1_param.select(
-                date=start_date.replace("-", ""), level=param1[2]
+                date=init_date.replace("-", ""), level=param1[2]
             )
             fs1_param_interp = mv.read(
                 data=fs1_param,
                 grid=[reso, reso],
-                area=area_bbox,
+                area=region_bbox,
                 interpolation='"--interpolation=grid-box-average"',
             )
             for level in param1[2]:
@@ -141,7 +157,7 @@ class Cyclone(Process):
             .to_dataframe()
             .reset_index()[["latitude", "longitude"]]
         )
-        data.loc[:, "time"] = start_date
+        data.loc[:, "time"] = init_date
         data.loc[:, "shear"] = (
             (data.u_200 - data.u_850) ** 2 + (data.v_200 - data.v_850) ** 2
         ) ** 0.5
@@ -188,7 +204,7 @@ class Cyclone(Process):
         model_path = os.path.join(workdir, "Unet_sevenAreas_fullStd_0lag_model.keras")
         urllib.request.urlretrieve(
             "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras",
-            model_path  # "Unet_sevenAreas_fullStd_0lag_model.keras"
+            model_path
         )
 
         model_trained = models.load_model(model_path)
@@ -198,13 +214,10 @@ class Cyclone(Process):
         data = data[["latitude", "longitude", "time"]]
         data['predictions_lag0'] = prediction.reshape(-1, 1)
 
-        prediction_path = os.path.join(workdir, "prediction_Sindian.csv")
-        data.to_csv(prediction_path)
-
         lag = 0
         workdir = Path(self.workdir)
         outfilename = os.path.join(
-            workdir, f'tcactivity_48_17_{start_date.replace("-","")}_lag{lag}_Sindian'
+            workdir, f'tcactivity_48_17_{init_date.replace("-","")}_lag{lag}_Sindian'
         )
 
         if True:
@@ -213,7 +226,7 @@ class Cyclone(Process):
                 latitudes=data["latitude"].values,
                 longitudes=data["longitude"].values,
                 values=data[predscol].values,
-            ).set_dates([pd.Timestamp(start_date)] * data.shape[0])
+            ).set_dates([pd.Timestamp(init_date)] * data.shape[0])
             fs = mv.geo_to_grib(geopoints=gpt, grid=[2.5, 2.5], tolerance=1.5) * 1e2
 
             # cont_gen = mv.mcont(
@@ -247,7 +260,7 @@ class Cyclone(Process):
             )
 
             gview = mv.geoview(
-                map_area_definition="corners", area=area_bbox, coastlines=coastlines
+                map_area_definition="corners", area=region_bbox, coastlines=coastlines
             )
             legend = mv.mlegend(
                 legend_text_font_size=0.5,
@@ -255,10 +268,9 @@ class Cyclone(Process):
 
             mv.setoutput(mv.png_output(output_name=outfilename)) # + ".png"))
             mv.plot(gview, fs, cont_oper, legend)
-            response.outputs["output_png"].data = outfilename + ".1.png"
+            response.outputs["output_png"].file = outfilename + ".1.png"
         # else:
             data.to_csv(outfilename + ".csv")
-            response.outputs["output_csv"].data = outfilename + ".csv"
+            response.outputs["output_csv"].file = outfilename + ".csv"
 
-        # response.outputs['output_csv'].file = prediction_path
         return response

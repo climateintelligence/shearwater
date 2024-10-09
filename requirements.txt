@@ -7,8 +7,8 @@ intake-esm
 pydantic<2
 requests
 aiohttp
-birdy
 tensorflow
 scipy
 ipykernel
 numpy
+metview
