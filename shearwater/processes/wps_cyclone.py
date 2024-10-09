@@ -226,8 +226,8 @@ class Cyclone(Process):
         workdir = Path(self.workdir)
         model_path = os.path.join(workdir, f"Unet_sevenAreas_fullStd_{lag}lag_model.keras")
         urllib.request.urlretrieve(
-            f"https://github.com/climateintelligence/shearwater/raw/
-                main/data/Unet_sevenAreas_fullStd_{lag}lag_model.keras",
+            f"""https://github.com/climateintelligence/shearwater/raw/
+                main/data/Unet_sevenAreas_fullStd_{lag}lag_model.keras""",
             model_path
         )
 
