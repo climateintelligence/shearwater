@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
     steps:
     - name: Checkout repository and submodules
       uses: actions/checkout@v2
@@ -17,7 +17,7 @@ jobs:
         submodules: recursive
     - name: Install packages
       run: |
-        sudo apt-get -y install pandoc
+        sudo apt-get -y install pandoc metview
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -29,11 +29,13 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
     - name: Test with pytest ⚙️
-      run: make test
+      run: 
+        export METVIEW_PYTHON_START_TIMEOUT=20 
+        make test
     - name: Lint with flake8 ⚙️
       run: make lint
-      if: matrix.python-version == 3.9
+      if: matrix.python-version == 3.11
     - name: Build docs 🏗️
       run: make docs
-      if: matrix.python-version == 3.9
+      if: matrix.python-version == 3.11
 

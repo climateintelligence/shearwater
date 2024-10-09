@@ -9,7 +9,3 @@ Processes
 
 Say Hello
 ---------
-
-.. autoprocess:: shearwater.processes.wps_say_hello.SayHello
-   :docstring:
-   :skiplines: 1
