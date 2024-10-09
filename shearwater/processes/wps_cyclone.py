@@ -112,10 +112,10 @@ class Cyclone(Process):
     def _handler(self, request, response):
         LOGGER.info("running cyclone ...")
         # TODO: lazy load tensorflow ... issues with sphinx doc build
-        import metview as mv
         from tensorflow.keras import models
 
         init_date = request.inputs['init_date'][0].data
+        
         leadtime = request.inputs['leadtime'][0].data
         region = request.inputs['region'][0].data
 
@@ -162,9 +162,9 @@ class Cyclone(Process):
 
         data = pd.DataFrame()
         for param1 in parameters:
-            path = f'/pool/data/ERA5/ET/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
+            path = f'/pool/data/ERA5/E5/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
             fs1_param = mv.read(
-                f"{path}/ET{'sf' if param1[2]==[0] else 'pl'}00_1D_{init_date[:7]}_{str(param1[0]).zfill(3)}.grb"
+                f"{path}/E5{'sf' if param1[2]==[0] else 'pl'}00_1D_{init_date[:7]}_{str(param1[0]).zfill(3)}.grb"
             )
             fs1_param = fs1_param.select(
                 date=init_date.replace("-", ""), level=param1[2]
