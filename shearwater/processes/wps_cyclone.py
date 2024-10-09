@@ -1,4 +1,4 @@
-from pywps import Process, LiteralInput, ComplexOutput, LiteralOutput
+from pywps import Process, LiteralInput, ComplexOutput
 from pywps.app.Common import Metadata
 import numpy as np
 import numpy
@@ -13,6 +13,7 @@ import logging
 LOGGER = logging.getLogger("PYWPS")
 
 FORMAT_PNG = Format("image/png", extension=".png", encoding="base64")
+
 
 class Cyclone(Process):
     """A process to forecast tropical cyclone activities."""
@@ -66,7 +67,7 @@ class Cyclone(Process):
             )
         ]
         outputs = [
-            ComplexOutput('output_csv', 
+            ComplexOutput('output_csv',
                           'Cyclone activity forecast',
                           abstract='csv file',
                           as_reference=True,
@@ -118,32 +119,32 @@ class Cyclone(Process):
 
         regions_dict = {
                                 # [ N,    E,   S,    W]
-            "Southern Indian"   : [ 0,   20, -30,   90],   # Southern Indian
-            "North Atlantic"    : [40,  -90,  10,  -20],   # North Atlantic
-            "Northwest Pacific" : [35,  100,   5,  170],   # Northwest Pacific
-            "Australia"         : [ 0,   90, -30,  160],   # Australia
-            "Northern Indian"   : [30,   30,   0,  100],   # Northern Indian
-            "East Pacific"      : [30, -170,   0, -100],   # East Pacific
-            "South Pacific"     : [ 0,  160, -30,  230],   # South Pacific
+            "Southern Indian":[0,   20, -30,   90],   # Southern Indian
+            "North Atlantic":[40,  -90,  10,  -20],   # North Atlantic
+            "Northwest Pacific":[35,  100,   5,  170],   # Northwest Pacific
+            "Australia":[0,   90, -30,  160],   # Australia
+            "Northern Indian":[30,   30,   0,  100],   # Northern Indian
+            "East Pacific":[30, -170,   0, -100],   # East Pacific
+            "South Pacific":[0,  160, -30,  230],   # South Pacific
         }
         
         lags_dict = {
-             "0-48 h"    :  0,
-             "24-72 h"   :  1,
-             "48-96 h"   :  2,
-             "72-120 h"  :  3,
-             "96-144 h"  :  4,
-             "120-168 h" :  5,
-             "144-192 h" :  6,
-             "168-216 h" :  7,
-             "192-240 h" :  8,
-             "216-264 h" :  9,
-             "240-288 h" : 10,
-             "264-312 h" : 11,
-             "288-336 h" : 12,
-             "312-360 h" : 13,
+             "0-48 h":0,
+             "24-72 h":1,
+             "48-96 h":2,
+             "72-120 h":3,
+             "96-144 h":4,
+             "120-168 h":5,
+             "144-192 h":6,
+             "168-216 h":7,
+             "192-240 h":8,
+             "216-264 h":9,
+             "240-288 h":10,
+             "264-312 h":11,
+             "288-336 h":12,
+             "312-360 h":13,
             }
-        
+
         region_bbox = regions_dict[region]
         lag = lags_dict[leadtime]
 
@@ -225,7 +226,8 @@ class Cyclone(Process):
         workdir = Path(self.workdir)
         model_path = os.path.join(workdir, f"Unet_sevenAreas_fullStd_{lag}lag_model.keras")
         urllib.request.urlretrieve(
-            f"https://github.com/climateintelligence/shearwater/raw/codeSprint/data/Unet_sevenAreas_fullStd_{lag}lag_model.keras",
+            f"https://github.com/climateintelligence/shearwater/raw/
+                main/data/Unet_sevenAreas_fullStd_{lag}lag_model.keras",
             model_path
         )
 
