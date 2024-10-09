@@ -77,8 +77,7 @@ class Cyclone(Process):
                           "Cyclone activity forecast",
                           abstract="png file",
                           as_reference=True,
-                          supported_formats=[FORMAT_PNG],
-            ),
+                          supported_formats=[FORMAT_PNG],),
         ]
 
         super(Cyclone, self).__init__(
@@ -103,7 +102,7 @@ class Cyclone(Process):
         from tensorflow.keras import models
 
         init_date = request.inputs['init_date'][0].data
-        
+
         leadtime = request.inputs['leadtime'][0].data
         region = request.inputs['region'][0].data
 
@@ -118,31 +117,30 @@ class Cyclone(Process):
         reso = 2.5
 
         regions_dict = {
-                                # [ N,    E,   S,    W]
-            "Southern Indian":[0,   20, -30,   90],   # Southern Indian
-            "North Atlantic":[40,  -90,  10,  -20],   # North Atlantic
-            "Northwest Pacific":[35,  100,   5,  170],   # Northwest Pacific
-            "Australia":[0,   90, -30,  160],   # Australia
-            "Northern Indian":[30,   30,   0,  100],   # Northern Indian
-            "East Pacific":[30, -170,   0, -100],   # East Pacific
-            "South Pacific":[0,  160, -30,  230],   # South Pacific
+            "Southern Indian": [0,   20, -30,   90],   # Southern Indian
+            "North Atlantic": [40,  -90,  10,  -20],   # North Atlantic
+            "Northwest Pacific": [35,  100,   5,  170],   # Northwest Pacific
+            "Australia": [0,   90, -30,  160],   # Australia
+            "Northern Indian": [30,   30,   0,  100],   # Northern Indian
+            "East Pacific": [30, -170,   0, -100],   # East Pacific
+            "South Pacific": [0,  160, -30,  230],   # South Pacific
         }
-        
+
         lags_dict = {
-             "0-48 h":0,
-             "24-72 h":1,
-             "48-96 h":2,
-             "72-120 h":3,
-             "96-144 h":4,
-             "120-168 h":5,
-             "144-192 h":6,
-             "168-216 h":7,
-             "192-240 h":8,
-             "216-264 h":9,
-             "240-288 h":10,
-             "264-312 h":11,
-             "288-336 h":12,
-             "312-360 h":13,
+             "0-48 h": 0,
+             "24-72 h": 1,
+             "48-96 h": 2,
+             "72-120 h": 3,
+             "96-144 h": 4,
+             "120-168 h": 5,
+             "144-192 h": 6,
+             "168-216 h": 7,
+             "192-240 h": 8,
+             "216-264 h": 9,
+             "240-288 h": 10,
+             "264-312 h": 11,
+             "288-336 h": 12,
+             "312-360 h": 13,
             }
 
         region_bbox = regions_dict[region]
