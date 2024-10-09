@@ -31,11 +31,27 @@ class Cyclone(Process):
                 default="2024-02-17"
             ),
             LiteralInput(
-                "end_day",
-                "End Day",
+                "leadtime",
+                "Lead time",
                 data_type="string",
-                abstract="Enter the end date, like 2024-05-28",
-                default="2024-05-28"
+                abstract="Enter the lead time, like 0-48 h",
+                allowed_values=[
+                    "0-48 h",
+                    "24-72 h",
+                    "48-96 h",
+                    "72-120 h",
+                    "96-144 h",
+                    "120-168 h",
+                    "144-192 h",
+                    "168-216 h",
+                    "192-240 h",
+                    "216-264 h",
+                    "240-288 h",
+                    "264-312 h",
+                    "288-336 h",
+                    "312-360 h",
+                ],
+                default="0-48 h"
             ),
             LiteralInput(
                 "region",
@@ -100,6 +116,7 @@ class Cyclone(Process):
         from tensorflow.keras import models
 
         init_date = request.inputs['init_date'][0].data
+        leadtime = request.inputs['leadtime'][0].data
         region = request.inputs['region'][0].data
 
         parameters = [
@@ -123,7 +140,25 @@ class Cyclone(Process):
             "South Pacific"     : [ 0,  160, -30,  230],   # South Pacific
         }
         
+        lags_dict = {
+             "0-48 h"    :  0,
+             "24-72 h"   :  1,
+             "48-96 h"   :  2,
+             "72-120 h"  :  3,
+             "96-144 h"  :  4,
+             "120-168 h" :  5,
+             "144-192 h" :  6,
+             "168-216 h" :  7,
+             "192-240 h" :  8,
+             "216-264 h" :  9,
+             "240-288 h" : 10,
+             "264-312 h" : 11,
+             "288-336 h" : 12,
+             "312-360 h" : 13,
+            }
+        
         region_bbox = regions_dict[region]
+        lag = lags_dict[leadtime]
 
         data = pd.DataFrame()
         for param1 in parameters:
@@ -201,9 +236,9 @@ class Cyclone(Process):
         test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
 
         workdir = Path(self.workdir)
-        model_path = os.path.join(workdir, "Unet_sevenAreas_fullStd_0lag_model.keras")
+        model_path = os.path.join(workdir, f"Unet_sevenAreas_fullStd_{lag}lag_model.keras")
         urllib.request.urlretrieve(
-            "https://github.com/climateintelligence/shearwater/raw/main/data/Unet_sevenAreas_fullStd_0lag_model.keras",
+            f"https://github.com/climateintelligence/shearwater/raw/codeSprint/data/Unet_sevenAreas_fullStd_{lag}lag_model.keras",
             model_path
         )
 
@@ -212,9 +247,8 @@ class Cyclone(Process):
         prediction = model_trained.predict(test_img_std)
 
         data = data[["latitude", "longitude", "time"]]
-        data['predictions_lag0'] = prediction.reshape(-1, 1)
+        data[f'predictions_lag{lag}'] = prediction.reshape(-1, 1)
 
-        lag = 0
         workdir = Path(self.workdir)
         outfilename = os.path.join(
             workdir, f'tcactivity_48_17_{init_date.replace("-","")}_lag{lag}_Sindian'
