@@ -1,18 +1,13 @@
 from pywps import Process, LiteralInput, ComplexOutput, LiteralOutput
 from pywps.app.Common import Metadata
-# from tensorflow.keras import models
-# import pickle
 import numpy as np
 import numpy
 import pandas as pd
-# from datetime import datetime
 import os
 from pywps import FORMATS, Format
 from pathlib import Path
 import urllib.request
 import metview as mv
-
-# import intake
 
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -71,25 +66,17 @@ class Cyclone(Process):
             )
         ]
         outputs = [
-            # LiteralOutput('output', 'Cyclone activity forecast',
-            #               abstract='netcdf',
-            #               # keywords=['output', 'result', 'response'],
-            #               data_type='string'),
-            ComplexOutput('output_csv', 'Cyclone activity forecast',
+            ComplexOutput('output_csv', 
+                          'Cyclone activity forecast',
                           abstract='csv file',
                           as_reference=True,
                           keywords=['output', 'result', 'response'],
                           supported_formats=[FORMATS.CSV],),
-            # LiteralOutput('output_png', 'Cyclone activity forecast',
-                          # abstract='png file',
-                          # keywords=['output', 'result', 'response'],
-                          # data_type='string'),
-            ComplexOutput(
-                "output_png",
-                "Cyclone activity forecast",
-                abstract="png file",
-                as_reference=True,
-                supported_formats=[FORMAT_PNG],
+            ComplexOutput("output_png",
+                          "Cyclone activity forecast",
+                          abstract="png file",
+                          as_reference=True,
+                          supported_formats=[FORMAT_PNG],
             ),
         ]
 
@@ -300,10 +287,10 @@ class Cyclone(Process):
                 legend_text_font_size=0.5,
             )
 
-            mv.setoutput(mv.png_output(output_name=outfilename)) # + ".png"))
+            mv.setoutput(mv.png_output(output_name=outfilename))
             mv.plot(gview, fs, cont_oper, legend)
             response.outputs["output_png"].file = outfilename + ".1.png"
-        # else:
+
             data.to_csv(outfilename + ".csv")
             response.outputs["output_csv"].file = outfilename + ".csv"
 
