@@ -10,6 +10,7 @@ import os
 from pywps import FORMATS, Format
 from pathlib import Path
 import urllib.request
+import metview as mv
 
 # import intake
 
@@ -252,9 +253,9 @@ class Cyclone(Process):
                 legend_text_font_size=0.5,
             )
 
-            mv.setoutput(mv.png_output(output_name=outfilename + ".png"))
+            mv.setoutput(mv.png_output(output_name=outfilename)) # + ".png"))
             mv.plot(gview, fs, cont_oper, legend)
-            response.outputs["output_png"].data = outfilename + ".png"
+            response.outputs["output_png"].data = outfilename + ".1.png"
         # else:
             data.to_csv(outfilename + ".csv")
             response.outputs["output_csv"].data = outfilename + ".csv"
