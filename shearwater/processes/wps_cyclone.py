@@ -7,7 +7,14 @@ import os
 from pywps import FORMATS, Format
 from pathlib import Path
 import urllib.request
-import metview as mv
+import xarray as xr
+try:
+    import metview as mv
+except Exception:
+    print("sorry ... no metview")
+    print(f"{os.environ}")
+    mv = None
+import matplotlib.pyplot as plt
 
 import logging
 LOGGER = logging.getLogger("PYWPS")
@@ -143,46 +150,67 @@ class Cyclone(Process):
              "312-360 h": 13,
             }
 
+        region_string = {
+            "Southern Indian": "Sindian",   # Southern Indian
+            "North Atlantic": "Natlantic",   # North Atlantic
+            "Northwest Pacific": "NWpacific",   # Northwest Pacific
+            "Australia": "Australia",   # Australia
+            "Northern Indian": "Nindian",   # Northern Indian
+            "East Pacific": "Epacific",   # East Pacific
+            "South Pacific": "Spacific",   # South Pacific
+            }
+
         region_bbox = regions_dict[region]
         lag = lags_dict[leadtime]
 
         data = pd.DataFrame()
-        for param1 in parameters:
-            path = f'/pool/data/ERA5/E5/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
-            fs1_param = mv.read(
-                f"{path}/E5{'sf' if param1[2]==[0] else 'pl'}00_1D_{init_date[:7]}_{str(param1[0]).zfill(3)}.grb"
-            )
-            fs1_param = fs1_param.select(
-                date=init_date.replace("-", ""), level=param1[2]
-            )
-            fs1_param_interp = mv.read(
-                data=fs1_param,
-                grid=[reso, reso],
-                area=region_bbox,
-                interpolation='"--interpolation=grid-box-average"',
-            )
-            for level in param1[2]:
-                data.loc[
-                    :,
-                    f"{param1[1]}{'_'+str(level) if (param1[1]=='u' or param1[1]=='v') else ''}",
-                ] = (
-                    fs1_param_interp.select(level=level)
-                    .to_dataset()
-                    .to_dataframe()
-                    .reset_index(drop=True)[param1[1]]
-                )
 
-        data.loc[:, ["latitude", "longitude"]] = (
-            fs1_param_interp.select(level=level)
-            .to_dataset()
-            .to_dataframe()
-            .reset_index()[["latitude", "longitude"]]
-        )
-        data.loc[:, "time"] = init_date
-        data.loc[:, "shear"] = (
-            (data.u_200 - data.u_850) ** 2 + (data.v_200 - data.v_850) ** 2
-        ) ** 0.5
-        data.loc[:, "sst"] = data.sst.fillna(0)
+        if mv:
+
+            for param1 in parameters:
+                path = f'/pool/data/ERA5/E5/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
+                fs1_param = mv.read(
+                    f"{path}/E5{'sf' if param1[2]==[0] else 'pl'}00_1D_{init_date[:7]}_{str(param1[0]).zfill(3)}.grb"
+                )
+                fs1_param = fs1_param.select(
+                    date=init_date.replace("-", ""), level=param1[2]
+                )
+                fs1_param_interp = mv.read(
+                    data=fs1_param,
+                    grid=[reso, reso],
+                    area=region_bbox,
+                    interpolation='"--interpolation=grid-box-average"',
+                )
+                for level in param1[2]:
+                    data.loc[
+                        :,
+                        f"{param1[1]}{'_'+str(level) if (param1[1]=='u' or param1[1]=='v') else ''}",
+                    ] = (
+                        fs1_param_interp.select(level=level)
+                        .to_dataset()
+                        .to_dataframe()
+                        .reset_index(drop=True)[param1[1]]
+                    )
+
+            data.loc[:, ["latitude", "longitude"]] = (
+                fs1_param_interp.select(level=level)
+                .to_dataset()
+                .to_dataframe()
+                .reset_index()[["latitude", "longitude"]]
+            )
+            data.loc[:, "time"] = init_date
+            data.loc[:, "shear"] = (
+                (data.u_200 - data.u_850) ** 2 + (data.v_200 - data.v_850) ** 2
+            ) ** 0.5
+            data.loc[:, "sst"] = data.sst.fillna(0)
+
+        else:
+            data1 = pd.read_csv(
+                f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{region_string[region]}_1.zip")
+            data2 = pd.read_csv(
+                f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{region_string[region]}_2.zip")
+            data = pd.concat((data1, data2), ignore_index=True)
+            data = data.loc[(data.time == init_date)]
 
         variables = [
             "vo",
@@ -238,10 +266,10 @@ class Cyclone(Process):
 
         workdir = Path(self.workdir)
         outfilename = os.path.join(
-            workdir, f'tcactivity_48_17_{init_date.replace("-","")}_lag{lag}_Sindian'
+            workdir, f'tcactivity_48_17_{init_date.replace("-","")}_lag{lag}_{region_string[region]}'
         )
 
-        if True:
+        if mv: # True:
             predscol = f"predictions_lag{lag}"
             gpt = mv.create_geo(
                 latitudes=data["latitude"].values,
@@ -293,5 +321,16 @@ class Cyclone(Process):
 
             data.to_csv(outfilename + ".csv")
             response.outputs["output_csv"].file = outfilename + ".csv"
+        else:
+            xr_predictions = xr.Dataset.from_dataframe(data.set_index(['time', 'latitude', 'longitude']))
+            xr_predictions = xr_predictions[f'predictions_lag{lag}']
+            
+            figs, axs = plt.subplots()
+            xr_predictions.plot(ax=axs)
+            plt.savefig(outfilename + ".png")
+            
+            response.outputs["output_png"].file = outfilename + ".png"
 
+            data.to_csv(outfilename + ".csv")
+            response.outputs["output_csv"].file = outfilename + ".csv"       
         return response
