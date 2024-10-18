@@ -333,5 +333,5 @@ class Cyclone(Process):
             response.outputs["output_png"].file = outfilename + ".png"
 
             data.to_csv(outfilename + ".csv")
-            response.outputs["output_csv"].file = outfilename + ".csv"     
+            response.outputs["output_csv"].file = outfilename + ".csv"
         return response
