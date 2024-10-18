@@ -24,3 +24,4 @@ dependencies:
 - pandoc
 - metview
 - metview-python
+- matplotlib
