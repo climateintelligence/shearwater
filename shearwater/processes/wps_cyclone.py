@@ -205,10 +205,11 @@ class Cyclone(Process):
             data.loc[:, "sst"] = data.sst.fillna(0)
 
         else:
+            reg = region_string[region]
             data1 = pd.read_csv(
-                f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{region_string[region]}_1.zip")
+                f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{reg}_1.zip")
             data2 = pd.read_csv(
-                f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{region_string[region]}_2.zip")
+                f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{reg}_2.zip")
             data = pd.concat((data1, data2), ignore_index=True)
             data = data.loc[(data.time == init_date)]
 
@@ -269,7 +270,7 @@ class Cyclone(Process):
             workdir, f'tcactivity_48_17_{init_date.replace("-","")}_lag{lag}_{region_string[region]}'
         )
 
-        if mv: # True:
+        if mv:  # True:
             predscol = f"predictions_lag{lag}"
             gpt = mv.create_geo(
                 latitudes=data["latitude"].values,
@@ -324,13 +325,13 @@ class Cyclone(Process):
         else:
             xr_predictions = xr.Dataset.from_dataframe(data.set_index(['time', 'latitude', 'longitude']))
             xr_predictions = xr_predictions[f'predictions_lag{lag}']
-            
+
             figs, axs = plt.subplots()
             xr_predictions.plot(ax=axs)
             plt.savefig(outfilename + ".png")
-            
+
             response.outputs["output_png"].file = outfilename + ".png"
 
             data.to_csv(outfilename + ".csv")
-            response.outputs["output_csv"].file = outfilename + ".csv"       
+            response.outputs["output_csv"].file = outfilename + ".csv"     
         return response
