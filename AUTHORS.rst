@@ -10,4 +10,6 @@ Development Lead
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Michael Maier-Gerber <michael.maier-gerber@ecmwf.int>
+* Paolo Bonetti <paolo.bonetti@polimi.it>
+* Linus Magnusson <linus.magnusson@ecmwf.int>

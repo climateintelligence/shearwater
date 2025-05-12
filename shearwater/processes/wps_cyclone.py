@@ -30,7 +30,8 @@ class Cyclone(Process):
                 "init_date",
                 "Initialisation date",
                 data_type="string",
-                abstract="Enter an initialisation date between 1940-01-01 and 2024-12-31.",
+                abstract="""Enter an initialisation date between 1940-01-01 and 2024-12-31.
+                Note that the years 1980-2015 have been used for training and tuning the ML models.""",
                 default="2024-07-03"
             ),
             LiteralInput(
@@ -108,7 +109,7 @@ class Cyclone(Process):
         try:
             from tensorflow.keras import models
         except Exception as ex:
-            msg = 'models from tensorflow.keras could not be imported.'
+            msg = 'Models from tensorflow.keras could not be imported. Reason for the failure: {} '.format(ex)
             LOGGER.error(msg)
 
         try:
@@ -119,11 +120,13 @@ class Cyclone(Process):
             region = request.inputs['region'][0].data
             LOGGER.info(region)
         except Exception as ex:
-            msg = 'Input variables could not be set.'
+            msg = 'Input variables could not be set. Reason for the failure: {} '.format(ex)
             LOGGER.error(msg)
 
-        ### Check validity of input date
-        if ((pd.Timestamp(init_date)>=pd.Timestamp('1940-01-01')) & (pd.Timestamp(init_date)<=pd.Timestamp('2024-12-31'))):
+        # Check validity of input date
+        VALIDstr = pd.Timestamp('1940-01-01')
+        VALIDend = pd.Timestamp('2024-12-31')
+        if ((pd.Timestamp(init_date) >= VALIDstr) & (pd.Timestamp(init_date) <= VALIDend)):
             msg = 'Input date is valid.'
             LOGGER.info(msg)
 
@@ -135,8 +138,9 @@ class Cyclone(Process):
                 [34, "sst", [0]],
                 [137, "tcwv", [0]],
             ]
+
             reso = 2.5
-    
+
             regions_dict = {
                 "Southern Indian": [0,   20, -30,   90],   # Southern Indian
                 "North Atlantic": [40,  -90,  10,  -20],   # North Atlantic
@@ -146,7 +150,7 @@ class Cyclone(Process):
                 "East Pacific": [30, -170,   0, -100],   # East Pacific
                 "South Pacific": [0,  160, -30,  230],   # South Pacific
             }
-    
+
             lags_dict = {
                  "0-48 h": 0,
                  "24-72 h": 1,
@@ -163,7 +167,7 @@ class Cyclone(Process):
                  "288-336 h": 12,
                  "312-360 h": 13,
                 }
-            
+
             region_string = {
                 "Southern Indian": "Sindian",   # Southern Indian
                 "North Atlantic": "Natlantic",   # North Atlantic
@@ -173,17 +177,18 @@ class Cyclone(Process):
                 "East Pacific": "Epacific",   # East Pacific
                 "South Pacific": "Spacific",   # South Pacific
                 }
-    
+
             region_bbox = regions_dict[region]
             lag = lags_dict[leadtime]
-    
+
             data = pd.DataFrame()
-            
+
             if mv:
                 for param1 in parameters:
                     path = f'/pool/data/ERA5/E5/{"sf" if param1[2]==[0] else "pl"}/an/1D/{str(param1[0]).zfill(3)}'
+                    filename_part2 = f'{init_date[:7]}_{str(param1[0]).zfill(3)}'
                     fs1_param = mv.read(
-                        f"{path}/E5{'sf' if param1[2]==[0] else 'pl'}00_1D_{init_date[:7]}_{str(param1[0]).zfill(3)}.grb"
+                        f"{path}/E5{'sf' if param1[2]==[0] else 'pl'}00_1D_{filename_part2}.grb"
                     )
                     fs1_param = fs1_param.select(
                         date=init_date.replace("-", ""), level=param1[2]
@@ -204,7 +209,7 @@ class Cyclone(Process):
                             .to_dataframe()
                             .reset_index(drop=True)[param1[1]]
                         )
-        
+
                 data.loc[:, ["latitude", "longitude"]] = (
                     fs1_param_interp.select(level=level)
                     .to_dataset()
@@ -216,7 +221,7 @@ class Cyclone(Process):
                     (data.u_200 - data.u_850) ** 2 + (data.v_200 - data.v_850) ** 2
                 ) ** 0.5
                 data.loc[:, "sst"] = data.sst.fillna(0)
-            
+
             else:
                 reg = region_string[region]
                 data1 = pd.read_csv(
@@ -225,7 +230,7 @@ class Cyclone(Process):
                     f"https://github.com/climateintelligence/shearwater/raw/main/data/test_dailymeans_{reg}_2.zip")
                 data = pd.concat((data1, data2), ignore_index=True)
                 data = data.loc[(data.time == init_date)]
-    
+
             variables = [
                 "vo",
                 "r",
@@ -237,53 +242,56 @@ class Cyclone(Process):
                 "sst",
                 "shear",
             ]
-    
+
             means, stds = pd.read_pickle(
                 "https://github.com/climateintelligence/shearwater/raw/main/data/full_statistics.zip")
-    
+
             data[variables] = (data[variables]-means[variables])/stds[variables]
-    
-            number_of_img, rows, cols = len(data.time.unique()), len(data.latitude.dropna().unique()), len(data.longitude.dropna().unique())
+
+            sz_lat = len(data.latitude.dropna().unique())
+            sz_lon = len(data.longitude.dropna().unique())
+            number_of_img, rows, cols = len(data.time.unique()), sz_lat, sz_lon
             images = np.zeros((number_of_img, rows, cols, len(variables)))
             df = data.sort_values(by=['time', 'latitude', 'longitude'])
             verbose = False
             k = 0
             for day in range(0, number_of_img):
-    
+
                 a = df.iloc[377*day:377*(day+1)]
                 i = 0
                 for var in variables:
-                    images[day, :, :, i] = a.pivot(index='latitude', columns='longitude').sort_index(ascending=False)[var]
+                    anew = a.pivot(index='latitude', columns='longitude').sort_index(ascending=False)[var]
+                    images[day, :, :, i] = anew
                     i += 1
                 k += 1
                 if ((k % 100 == 0) & (verbose is True)):
                     print(k)
-    
+
             test_img_std = images
-    
+
             test_img_std = np.pad(test_img_std, ((0, 0), (1, 2), (1, 2), (0, 0)), 'constant')
-    
+
             workdir = Path(self.workdir)
             LOGGER.info(workdir)
-            model_path = os.path.join(workdir, f"Unet_sevenAreas_fullStd_{lag}lag_model.keras")
+            model_path = os.path.join(workdir, f"UNET020_sevenAreas_fullStd_{lag}lag_model.keras")
             git_path = "https://github.com/climateintelligence/shearwater/raw/main"
             urllib.request.urlretrieve(
-                f"{git_path}/data/Unet_sevenAreas_fullStd_{lag}lag_model.keras",
+                f"{git_path}/data/UNET020_sevenAreas_fullStd_{lag}lag_model.keras",
                 model_path
             )
-            
+
             model_trained = models.load_model(model_path)
-    
+
             prediction = model_trained.predict(test_img_std)
-    
+
             data = data[["latitude", "longitude", "time"]]
             data[f'predictions_lag{lag}'] = prediction.reshape(-1, 1)
-    
+
             workdir = Path(self.workdir)
             outfilename = os.path.join(
                 workdir, f'tcactivity_48_17_{init_date.replace("-","")}_lag{lag}_{region_string[region]}'
             )
-    
+
             if mv:
                 predscol = f"predictions_lag{lag}"
                 gpt = mv.create_geo(
@@ -292,7 +300,7 @@ class Cyclone(Process):
                     values=data[predscol].values,
                 ).set_dates([pd.Timestamp(init_date)] * data.shape[0])
                 fs = mv.geo_to_grib(geopoints=gpt, grid=[2.5, 2.5], tolerance=1.5) * 1e2
-    
+
                 # cont_gen = mv.mcont(
                 #     legend="on",
                 #     contour_line_colour="avocado",
@@ -313,7 +321,7 @@ class Cyclone(Process):
                 #     contour_shade_min_level_colour="blue",
                 #     contour_shade_colour_direction="clockwise",
                 # )
-    
+
                 cont_oper = mv.mcont(
                     contour_automatic_setting="style_name",
                     contour_style_name="prob_green2yellow",
@@ -322,44 +330,48 @@ class Cyclone(Process):
                 coastlines = mv.mcoast(
                     map_coastline_land_shade="on", map_coastline_land_shade_colour="grey"
                 )
-    
+
                 gview = mv.geoview(
                     map_area_definition="corners", area=region_bbox, coastlines=coastlines
                 )
                 legend = mv.mlegend(
                     legend_text_font_size=0.5,
                 )
-    
+
+                VTstr = (pd.Timestamp(init_date) + pd.Timedelta(str(lag)+'d')).strftime('%Y-%m-%d') + ' 00Z'
+                laggg = pd.Timedelta(str(2)+'d')
+                VTend = (pd.Timestamp(init_date) + pd.Timedelta(str(lag)+'d') + laggg).strftime('%Y-%m-%d') + ' 00Z'
+                subtitle1 = f"<font size='0.4'>{region}, Initialisation: {init_date} 00Z, Lead time: {leadtime}"
+                subtitle2 = f", Valid time: {VTstr+' to '+VTend}</font>"
                 title = mv.mtext(
                     text_font_size=0.50,
                     text_lines=[
                         "<font size='0.7'>Probability of tropical cyclone activity</font>",
-                        f"<font size='0.5'>{region}, Initialisation: {init_date}, Lead time: {leadtime}</font>",
+                        subtitle1 + subtitle2,
                         "",
                     ],
                     text_colour="CHARCOAL",
                 )
-    
+
                 mv.setoutput(mv.png_output(output_name=outfilename))
                 mv.plot(gview, fs, cont_oper, legend, title)
                 response.outputs["output_png"].file = outfilename + ".1.png"
-    
+
                 data.to_csv(outfilename + ".csv")
                 response.outputs["output_csv"].file = outfilename + ".csv"
             else:
                 xr_predictions = xr.Dataset.from_dataframe(data.set_index(['time', 'latitude', 'longitude']))
                 xr_predictions = xr_predictions[f'predictions_lag{lag}']
-    
+
                 figs, axs = plt.subplots()
                 xr_predictions.plot(ax=axs)
                 plt.savefig(outfilename + ".png")
-    
+
                 response.outputs["output_png"].file = outfilename + ".png"
-    
+
                 data.to_csv(outfilename + ".csv")
                 response.outputs["output_csv"].file = outfilename + ".csv"
 
-        
         else:
             msg = f"Input date '{init_date}' outside the allowed period."
             LOGGER.error(msg)
