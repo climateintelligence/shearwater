@@ -1,7 +1,7 @@
 name: shearwater
 channels:
 - conda-forge
-- defaults
+- nodefaults
 dependencies:
 - pip
 - python>=3.9,<3.12
@@ -24,3 +24,4 @@ dependencies:
 - pandoc
 - metview
 - metview-python
+- matplotlib

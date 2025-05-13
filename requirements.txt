@@ -13,3 +13,4 @@ ipykernel
 numpy
 eccodes
 metview
+matplotlib
