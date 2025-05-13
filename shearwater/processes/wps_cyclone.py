@@ -278,7 +278,7 @@ class Cyclone(Process):
             k = 0
             for day in range(0, number_of_img):
 
-                a = df.iloc[377 * day : 377 * (day + 1)]
+                a = df.iloc[377 * day : 377 * (day + 1)]  # noqa
                 i = 0
                 for var in variables:
                     anew = a.pivot(index="latitude", columns="longitude").sort_index(
