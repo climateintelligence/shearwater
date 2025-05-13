@@ -4,6 +4,7 @@
    :maxdepth: 1
    :caption: Contents:
 
+   README
    installation
    configuration
    dev_guide
