@@ -36,6 +36,9 @@ Once all the necessary information has been provided, the user can click on the 
 
 Future plans are to include additional AI models and benchmarks, such as ECMWF’s IFS ensemble probability, the climatological probability and the probability predicted by the more sophisticated hybrid approach. The latter takes the input features from the IFS ensemble and applies the trained AI model to combine the benefits of both approaches. Another idea is to let the user select the region of interest.
 
+
+**References**
+
 Gahtan, J., K. R. Knapp, C. J. Schreck, H. J. Diamond, J. P. Kossin, and M. C. Kruk, 2024: International Best Track Archive for Climate Stewardship (IBTrACS) project, version 4r01. NOAA National Centers for Environmental Information, accessed 1 July 2022, https://doi.org/10.25921/82ty-9e16.
 
 Hersbach, H., B. Bell, P. Berrisford, S. Hirahara, A. Horányi, J. Muñoz‐Sabater, J. Nicolas, C. Peubey, R. Radu, D. Schepers, an A. Simmons, 2020: The ERA5 global reanalysis. Quart. J. Roy. Met. Soc., 146, 1999-2049, https://doi.org/10.1002/qj.3803.
