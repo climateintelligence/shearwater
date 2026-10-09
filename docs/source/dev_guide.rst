@@ -79,10 +79,16 @@ Update the Conda specification file to build identical environments_ on a specif
 .. code-block:: console
 
   $ conda env create -f environment.yml
+  $ conda install -n shearwater -c conda-forge gunicorn gevent psycopg2=2.9.12 drmaa=0.7.9 dill pytest pytest-cov
   $ source activate shearwater
   $ make clean
   $ make install
-  $ conda list -n shearwater --explicit > spec-file.txt
+  $ conda list -n shearwater --explicit --md5 > linux-64.spec
+
+Keep the additional deployment packages above in sync with
+``wps_conda_packages`` in the Ansible playbook. Commit ``linux-64.spec``
+alongside dependency changes. The legacy ``spec-file.txt`` is a macOS ARM
+snapshot, not the Linux deployment specification.
 
 .. _environments: https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#building-identical-conda-environments
 

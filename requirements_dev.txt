@@ -1,4 +1,4 @@
-pytest>=6.0
+pytest>=6.0,<9
 pytest-runner
 pytest-cov
 flake8
@@ -14,7 +14,7 @@ bump2version
 Click
 cruft
 # Changing dependencies above this comment will create merge conflicts when updating the cookiecutter template with cruft. Add extra requirements below this line.
-tensorflow
+tensorflow>=2.15,<2.16
 scipy
 ipykernel
-numpy
+numpy>=1.26,<2

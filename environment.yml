@@ -4,21 +4,24 @@ channels:
 - nodefaults
 dependencies:
 - pip
-- python>=3.9,<3.12
-- pywps>=4.5.2,<4.7
+- python>=3.10,<3.12
+- pywps>=4.7,<4.8
 - jinja2
 - click
 - psutil
-- intake
-- intake-esm
-- pydantic<2
+- pandas
+- xarray
+- netcdf4
 - requests
 - aiohttp
 - ipykernel
 - scipy
 - birdy
-- tensorflow=2.15.0
-- numpy=1.26.0
+# Conda TensorFlow 2.15 pins ICU 73, incompatible with the deployment's libpq.
+# The pip wheel preserves Keras 2 compatibility without that native-library pin.
+- pip:
+  - tensorflow>=2.15,<2.16
+- numpy>=1.26,<2
 # tests
 - pytest
 - pandoc
