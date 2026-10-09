@@ -109,5 +109,31 @@ Use Ansible to deploy ShearWater on your System
 
 Use the `Ansible playbook`_ for PyWPS to deploy ShearWater on your system.
 
+Use the Linux deployment specification in the deployment inventory::
+
+  conda_env_use_spec: true
+  conda_env_spec_file: linux-64.spec
+
+``linux-64.spec`` replaces the old ``spec-list.txt`` and uses the filename
+expected by the current playbook. Update inventories that explicitly
+override the filename with ``spec-list.txt``. Run a full environment
+deployment; an application-only update does not update Conda packages.
+
+The Linux spec includes the playbook's additional packages: Gunicorn,
+gevent, psycopg2 2.9.12, DRMAA 0.7.9, dill, pytest and pytest-cov.
+The separate ``spec-file.txt`` is a historical macOS ARM snapshot and must
+not be used for Linux deployments.
+
+ShearWater requires Python 3.10 or 3.11 and PyWPS 4.7. TensorFlow stays on
+the 2.15 series with NumPy 1.x for compatibility with the bundled Keras
+models. TensorFlow is installed with pip: its Conda 2.15 package pins an
+older ICU library that conflicts with the playbook's PostgreSQL client.
+The playbook installs TensorFlow through ShearWater's ``pip install .``
+step after creating the environment from ``linux-64.spec``. When creating
+an environment directly from ``environment.yml``, its pip section performs
+this step. The explicit spec only locks Conda packages; the pip dependencies
+are governed by ``requirements.txt``. Conda also installs the native Metview
+executable required by the Python bindings.
+
 
 .. _Ansible playbook: http://ansible-wps-playbook.readthedocs.io/en/latest/index.html
